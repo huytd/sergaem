@@ -1,0 +1,8 @@
+[package]
+name = "sergaem"
+version = "0.1.0"
+authors = ["Huy <kingbazoka@gmail.com>"]
+
+[dependencies]
+ws = "0.7.3"
+lazy_static = "1.0.0"
