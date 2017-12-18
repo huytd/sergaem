@@ -44,13 +44,13 @@ impl NetworkManager {
     }
 }
 
-pub struct Server {
+pub struct ServerHandler {
     pub id: u64,
     pub socket: Sender,
     pub manager: NetworkManagerRef
 }
 
-impl Handler for Server {
+impl Handler for ServerHandler {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("Client connected");
         self.manager.borrow_mut().add_client(self.id, self.socket.clone());
