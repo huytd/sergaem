@@ -3,6 +3,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 
+use game_manager::GameManagerRef;
+
 const MAX_USERS_ALLOWED: usize = 2000;
 
 type NetworkManagerRef = Rc<RefCell<NetworkManager>>;
@@ -47,7 +49,18 @@ impl NetworkManager {
 pub struct ServerHandler {
     pub id: u64,
     pub socket: Sender,
-    pub manager: NetworkManagerRef
+    pub manager: NetworkManagerRef,
+    pub game_manager: GameManagerRef
+}
+
+impl ServerHandler {
+    pub fn send_message(&self, msg: &str) -> Result<()> {
+        self.socket.send(Message::from(msg))
+    }
+
+    pub fn send_error(&self) -> Result<()> {
+        self.socket.send(Message::from("ERROR"))
+    }
 }
 
 impl Handler for ServerHandler {
@@ -59,7 +72,34 @@ impl Handler for ServerHandler {
     }
     fn on_message(&mut self, msg: Message) -> Result<()> {
         println!("Server got message '{}'. ", msg);
-        self.socket.send(msg)
+        let result = match msg.is_text() {
+            true => {
+                let msg_text = msg.as_text().unwrap();
+                match &msg_text[0..3] {
+                    "LST" => {
+                        let list = self.game_manager.borrow().get_games_list();
+                        let mut s = String::from("LST#");
+                        for i in list {
+                            s += &format!("{},", i);
+                        }
+                        println!("Return game list: {}", s);
+                        self.send_message(&s)
+                    },
+                    "JON" => {
+                        self.send_error()
+                    },
+                    _ => {
+                        println!("Unknown text message");
+                        self.send_error()
+                    }
+                }
+            },
+            false => {
+                println!("Unknown message");
+                self.send_error()
+            }
+        };
+        result
     }
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("WebSocket closing for ({:?}) {}", code, reason);
