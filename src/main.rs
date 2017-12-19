@@ -1,13 +1,11 @@
 extern crate ws;
 
-mod commands;
-mod network;
-mod game;
-mod game_manager;
+mod logic;
+mod engine;
 
 use ws::listen;
-use network::{ServerHandler, NetworkManager};
-use game_manager::GameManager;
+use engine::network::{ServerHandler, NetworkManager};
+use engine::game_manager::GameManager;
 
 fn main() {
     let network_manager = NetworkManager::new_ref();

@@ -3,7 +3,7 @@ use std::cell::RefCell;
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
 
-use game_manager::GameManagerRef;
+use engine::game_manager::GameManagerRef;
 
 const MAX_USERS_ALLOWED: usize = 2000;
 

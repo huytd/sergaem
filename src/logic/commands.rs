@@ -1,6 +1,6 @@
 use ws::Result;
 
-use network::ServerHandler;
+use engine::network::ServerHandler;
 
 impl ServerHandler {
     pub fn processing_commands(&mut self, msg: &str) -> Result<()> {

@@ -1,4 +1,4 @@
-use game::Game;
+use engine::game::Game;
 
 use std::rc::Rc;
 use std::cell::RefCell;
