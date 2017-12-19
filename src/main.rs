@@ -1,5 +1,6 @@
 extern crate ws;
 
+mod commands;
 mod network;
 mod game;
 mod game_manager;
@@ -15,7 +16,6 @@ fn main() {
 
     listen("127.0.0.1:3123", |client| {
         let server = ServerHandler {
-            id: network_manager.borrow().get_next_id(),
             socket: client,
             manager: network_manager.clone(),
             game_manager: game_manager.clone()

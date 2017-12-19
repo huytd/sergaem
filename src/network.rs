@@ -1,23 +1,22 @@
 use std::rc::Rc;
 use std::cell::RefCell;
-use std::collections::HashMap;
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
+use ws::util::Token;
 
 use game_manager::GameManagerRef;
 
 const MAX_USERS_ALLOWED: usize = 2000;
 
-type NetworkManagerRef = Rc<RefCell<NetworkManager>>;
-type ClientRef = Rc<RefCell<HashMap<u64, Sender>>>;
+pub type NetworkManagerRef = Rc<RefCell<NetworkManager>>;
 
 pub struct NetworkManager {
-    pub clients: ClientRef
+    pub clients: Vec<Sender>
 }
 
 impl NetworkManager {
     pub fn new() -> NetworkManager {
         NetworkManager {
-            clients: Rc::new(RefCell::new(HashMap::with_capacity(MAX_USERS_ALLOWED)))
+            clients: Vec::with_capacity(MAX_USERS_ALLOWED)
         }
     }
 
@@ -26,28 +25,34 @@ impl NetworkManager {
     }
 
     pub fn get_total_clients(&self) -> usize {
-        self.clients.borrow().len()
+        self.clients.len()
     }
 
-    pub fn get_next_id(&self) -> u64 {
-        (self.clients.borrow().len() + 1) as u64
-    }
-
-    pub fn add_client(&mut self, id: u64, client: Sender) -> bool {
-        if self.clients.borrow().len() <= MAX_USERS_ALLOWED {
-            self.clients.borrow_mut().insert(id, client);
+    pub fn add_client(&mut self, client: Sender) -> bool {
+        if self.clients.len() <= MAX_USERS_ALLOWED {
+            self.clients.push(client);
             return true;
         }
         false
     }
 
-    pub fn remove_client(&mut self, id: &u64) {
-        self.clients.borrow_mut().remove(id);
+    pub fn remove_client(&mut self, token: Token) {
+        let mut found: i32 = -1;
+        let mut index = 0;
+        for client in self.clients.iter() {
+            if client.token().eq(&token) {
+                found = index;
+                break;
+            }
+            index += 1;
+        }
+        if found != -1 {
+            self.clients.remove(found as usize);
+        }
     }
 }
 
 pub struct ServerHandler {
-    pub id: u64,
     pub socket: Sender,
     pub manager: NetworkManagerRef,
     pub game_manager: GameManagerRef
@@ -66,7 +71,7 @@ impl ServerHandler {
 impl Handler for ServerHandler {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("Client connected");
-        self.manager.borrow_mut().add_client(self.id, self.socket.clone());
+        self.manager.borrow_mut().add_client(self.socket.clone());
         println!("Total clients: {}", self.manager.borrow().get_total_clients());
         Ok(())
     }
@@ -75,24 +80,7 @@ impl Handler for ServerHandler {
         let result = match msg.is_text() {
             true => {
                 let msg_text = msg.as_text().unwrap();
-                match &msg_text[0..3] {
-                    "LST" => {
-                        let list = self.game_manager.borrow().get_games_list();
-                        let mut s = String::from("LST#");
-                        for i in list {
-                            s += &format!("{},", i);
-                        }
-                        println!("Return game list: {}", s);
-                        self.send_message(&s)
-                    },
-                    "JON" => {
-                        self.send_error()
-                    },
-                    _ => {
-                        println!("Unknown text message");
-                        self.send_error()
-                    }
-                }
+                self.processing_commands(msg_text)
             },
             false => {
                 println!("Unknown message");
@@ -103,7 +91,8 @@ impl Handler for ServerHandler {
     }
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("WebSocket closing for ({:?}) {}", code, reason);
-        self.manager.borrow_mut().remove_client(&self.id);
+        self.game_manager.borrow_mut().remove_player(self.socket.token());
+        self.manager.borrow_mut().remove_client(self.socket.token());
         println!("Total clients: {}", self.manager.borrow().get_total_clients());
     }
 }
