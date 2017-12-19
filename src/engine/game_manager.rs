@@ -50,6 +50,12 @@ impl GameManager {
         false
     }
 
+    pub fn start_game(&self, game_id: u64) {
+        if let Some(game) = self.games.get(&game_id) {
+            game.start_game();
+        }
+    }
+
     pub fn get_games_list(&self) -> Vec<u64> {
         let mut result: Vec<u64> = vec![];
         for key in self.games.keys() {
