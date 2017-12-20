@@ -5,3 +5,4 @@ authors = ["Huy <kingbazoka@gmail.com>"]
 
 [dependencies]
 ws = "0.7.3"
+crossbeam = "0.3.0"

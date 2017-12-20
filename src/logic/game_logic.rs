@@ -1,6 +1,7 @@
 use engine::game::Game;
 
 impl Game {
-    pub fn game_loop(delta_time: f32) {
+    pub fn game_loop(&self) {
+        println!("GAME LOOP IS RUNNING");
     }
 }
