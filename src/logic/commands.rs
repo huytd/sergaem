@@ -6,7 +6,9 @@ impl ServerHandler {
     pub fn processing_commands(&mut self, msg: &str) -> Result<()> {
         match &msg[0..3] {
             "LST" => {
-                let list = self.game_manager.borrow().get_games_list();
+                println!("PRELOCK");
+                let list = self.game_manager.lock().unwrap().get_games_list();
+                println!("AFTERLOCK");
                 let mut s = String::from("LST#");
                 for i in list {
                     s += &format!("{},", i);
@@ -15,9 +17,13 @@ impl ServerHandler {
                 self.send_message(&s)
             },
             "JON" => {
+                println!("PRE JOIN LOCK");
                 let game_id = (&msg[4..4]).parse::<u64>().unwrap_or(1u64);
-                let mut games = self.game_manager.borrow_mut();
-                let result = games.player_join_game(self.socket.clone(), game_id);
+                let result = true;
+                {
+                    self.game_manager.lock().unwrap().player_join_game(self.socket.clone(), game_id);
+                }
+                println!("AFTER JOIN LOCK");
                 if result {
                     return self.send_message("JOINED");
                 }

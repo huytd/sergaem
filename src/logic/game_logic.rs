@@ -1,7 +1,18 @@
 use engine::game::Game;
 
-impl Game {
-    pub fn game_loop(&self) {
-        println!("GAME LOOP IS RUNNING");
+pub struct GameLogic {
+    game: Game
+}
+
+impl GameLogic {
+    pub fn new(_game: Game) -> GameLogic {
+        GameLogic { game: _game }
+    }
+
+    pub fn init(&self) {
+    }
+
+    pub fn update(&self) {
+        self.game.broadcast("SENT 60 times");
     }
 }

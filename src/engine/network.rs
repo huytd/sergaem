@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 use std::cell::RefCell;
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
@@ -7,7 +7,7 @@ use engine::game_manager::GameManagerRef;
 
 const MAX_USERS_ALLOWED: usize = 2000;
 
-pub type NetworkManagerRef = Rc<RefCell<NetworkManager>>;
+pub type NetworkManagerRef = Arc<Mutex<NetworkManager>>;
 
 pub struct NetworkManager {
     pub clients: Vec<Sender>
@@ -21,7 +21,7 @@ impl NetworkManager {
     }
 
     pub fn new_ref() -> NetworkManagerRef {
-        Rc::new(RefCell::new(NetworkManager::new()))
+        Arc::new(Mutex::new(NetworkManager::new()))
     }
 
     pub fn get_total_clients(&self) -> usize {
@@ -71,8 +71,8 @@ impl ServerHandler {
 impl Handler for ServerHandler {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("Client connected");
-        self.manager.borrow_mut().add_client(self.socket.clone());
-        println!("Total clients: {}", self.manager.borrow().get_total_clients());
+        self.manager.lock().unwrap().add_client(self.socket.clone());
+        println!("Total clients: {}", self.manager.lock().unwrap().get_total_clients());
         Ok(())
     }
     fn on_message(&mut self, msg: Message) -> Result<()> {
@@ -91,8 +91,8 @@ impl Handler for ServerHandler {
     }
     fn on_close(&mut self, code: CloseCode, reason: &str) {
         println!("WebSocket closing for ({:?}) {}", code, reason);
-        self.game_manager.borrow_mut().remove_player(self.socket.token());
-        self.manager.borrow_mut().remove_client(self.socket.token());
-        println!("Total clients: {}", self.manager.borrow().get_total_clients());
+        self.game_manager.lock().unwrap().remove_player(self.socket.token());
+        self.manager.lock().unwrap().remove_client(self.socket.token());
+        println!("Total clients: {}", self.manager.lock().unwrap().get_total_clients());
     }
 }

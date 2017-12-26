@@ -1,10 +1,9 @@
 extern crate crossbeam;
 
 use std::time::{Duration, SystemTime};
-use std::thread;
-use std::sync::mpsc;
-use ws::Sender;
+use ws::{Sender, Message};
 use ws::util::Token;
+use logic::game_logic::GameLogic;
 
 const MAX_PLAYERS_ALLOWED: usize = 100;
 
@@ -28,12 +27,14 @@ impl Game {
         crossbeam::scope(|scope| {
             scope.spawn(move || {
                 let mut last_frame = SystemTime::now();
+                let mut game_logic = GameLogic::new(self.clone());
+                game_logic.init();
                 while self.is_started {
                     let current_time = SystemTime::now();
                     let frame_count = current_time.duration_since(last_frame).unwrap();
                     if frame_count.ge(&Duration::from_millis(16)) {
                         // It's 60 fps here
-                        self.game_loop();
+                        game_logic.update();
                         last_frame = current_time;
                     }
                 }
@@ -64,5 +65,11 @@ impl Game {
             return true;
         }
         false
+    }
+
+    pub fn broadcast(&self, msg: &str) {
+        for player in self.players.iter() {
+            player.send(Message::from(msg));
+        }
     }
 }

@@ -1,2 +1,2 @@
-mod commands;
-mod game_logic;
+pub mod commands;
+pub mod game_logic;

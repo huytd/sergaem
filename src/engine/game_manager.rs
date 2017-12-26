@@ -1,12 +1,11 @@
 use engine::game::Game;
 
-use std::rc::Rc;
-use std::cell::RefCell;
+use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use ws::Sender;
 use ws::util::Token;
 
-pub type GameManagerRef = Rc<RefCell<GameManager>>;
+pub type GameManagerRef = Arc<Mutex<GameManager>>;
 
 const MAX_GAMES_ALLOWED: usize = 500;
 
@@ -22,7 +21,7 @@ impl GameManager {
     }
 
     pub fn new_ref() -> GameManagerRef {
-        Rc::new(RefCell::new(GameManager::new()))
+        Arc::new(Mutex::new(GameManager::new()))
     }
 
     pub fn get_next_id(&self) -> u64 {
@@ -65,7 +64,9 @@ impl GameManager {
     }
 
     pub fn player_join_game(&mut self, player: Sender, game_id: u64) -> bool {
+        println!("Looking for game");
         if let Some(game) = self.games.get_mut(&game_id) {
+            println!("FOUND GAME");
             return game.join(player);
         }
         false
