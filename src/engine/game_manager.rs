@@ -1,11 +1,8 @@
 use engine::game::Game;
 
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use ws::Sender;
 use ws::util::Token;
-
-pub type GameManagerRef = Arc<Mutex<GameManager>>;
 
 const MAX_GAMES_ALLOWED: usize = 500;
 
@@ -18,10 +15,6 @@ impl GameManager {
         GameManager {
             games: HashMap::with_capacity(MAX_GAMES_ALLOWED)
         }
-    }
-
-    pub fn new_ref() -> GameManagerRef {
-        Arc::new(Mutex::new(GameManager::new()))
     }
 
     pub fn get_next_id(&self) -> u64 {

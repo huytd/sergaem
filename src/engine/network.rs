@@ -1,13 +1,7 @@
-use std::sync::{Arc, Mutex};
-use std::cell::RefCell;
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
 
-use engine::game_manager::GameManagerRef;
-
 const MAX_USERS_ALLOWED: usize = 2000;
-
-pub type NetworkManagerRef = Arc<Mutex<NetworkManager>>;
 
 pub struct NetworkManager {
     pub clients: Vec<Sender>
@@ -18,10 +12,6 @@ impl NetworkManager {
         NetworkManager {
             clients: Vec::with_capacity(MAX_USERS_ALLOWED)
         }
-    }
-
-    pub fn new_ref() -> NetworkManagerRef {
-        Arc::new(Mutex::new(NetworkManager::new()))
     }
 
     pub fn get_total_clients(&self) -> usize {
@@ -49,50 +39,5 @@ impl NetworkManager {
         if found != -1 {
             self.clients.remove(found as usize);
         }
-    }
-}
-
-pub struct ServerHandler {
-    pub socket: Sender,
-    pub manager: NetworkManagerRef,
-    pub game_manager: GameManagerRef
-}
-
-impl ServerHandler {
-    pub fn send_message(&self, msg: &str) -> Result<()> {
-        self.socket.send(Message::from(msg))
-    }
-
-    pub fn send_error(&self) -> Result<()> {
-        self.socket.send(Message::from("ERROR"))
-    }
-}
-
-impl Handler for ServerHandler {
-    fn on_open(&mut self, _: Handshake) -> Result<()> {
-        println!("Client connected");
-        self.manager.lock().unwrap().add_client(self.socket.clone());
-        println!("Total clients: {}", self.manager.lock().unwrap().get_total_clients());
-        Ok(())
-    }
-    fn on_message(&mut self, msg: Message) -> Result<()> {
-        println!("Server got message '{}'. ", msg);
-        let result = match msg.is_text() {
-            true => {
-                let msg_text = msg.as_text().unwrap();
-                self.processing_commands(msg_text)
-            },
-            false => {
-                println!("Unknown message");
-                self.send_error()
-            }
-        };
-        result
-    }
-    fn on_close(&mut self, code: CloseCode, reason: &str) {
-        println!("WebSocket closing for ({:?}) {}", code, reason);
-        self.game_manager.lock().unwrap().remove_player(self.socket.token());
-        self.manager.lock().unwrap().remove_client(self.socket.token());
-        println!("Total clients: {}", self.manager.lock().unwrap().get_total_clients());
     }
 }
