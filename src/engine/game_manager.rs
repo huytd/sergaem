@@ -3,17 +3,17 @@ use engine::game::Game;
 use std::collections::HashMap;
 use ws::Sender;
 use ws::util::Token;
-use std::sync::mpsc;
+use crossbeam::channel as channel;
 
 const MAX_GAMES_ALLOWED: usize = 500;
 
 pub struct GameManager {
     pub games: HashMap<u64, Game>,
-    receiver: mpsc::Receiver<String>
+    receiver: channel::Receiver<String>
 }
 
 impl GameManager {
-    pub fn new(receiver: mpsc::Receiver<String>) -> GameManager {
+    pub fn new(receiver: channel::Receiver<String>) -> GameManager {
         GameManager {
             games: HashMap::with_capacity(MAX_GAMES_ALLOWED),
             receiver: receiver,
@@ -22,7 +22,7 @@ impl GameManager {
 
     pub fn listen(&self) {
         loop {
-            if let Ok(msg) = self.receiver.recv() {
+            if let Some(msg) = self.receiver.recv() {
                 println!("DBG::GAME GOT DATA {}", msg);
             }
         }

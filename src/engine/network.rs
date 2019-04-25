@@ -1,16 +1,16 @@
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
-use std::sync::mpsc;
+use crossbeam::channel as channel;
 
 const MAX_USERS_ALLOWED: usize = 2000;
 
 pub struct NetworkManager {
     pub clients: Vec<Sender>,
-    receiver: mpsc::Receiver<String>
+    receiver: channel::Receiver<String>
 }
 
 impl NetworkManager {
-    pub fn new(receiver: mpsc::Receiver<String>) -> NetworkManager {
+    pub fn new(receiver: channel::Receiver<String>) -> NetworkManager {
         NetworkManager {
             clients: Vec::with_capacity(MAX_USERS_ALLOWED),
             receiver: receiver
@@ -19,7 +19,7 @@ impl NetworkManager {
 
     pub fn listen(&self) {
         loop {
-            if let Ok(msg) = self.receiver.recv() {
+            if let Some(msg) = self.receiver.recv() {
                 println!("DBG::NET GOT DATA {}", msg);
             }
         }

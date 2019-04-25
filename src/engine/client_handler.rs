@@ -1,11 +1,11 @@
 use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
-use std::sync::mpsc;
+use crossbeam::channel as channel;
 
 pub struct ClientHandler {
     pub socket: Sender,
-    pub game_manager_bus: mpsc::Sender<String>,
-    pub network_manager_bus: mpsc::Sender<String>
+    pub game_manager_bus: channel::Sender<String>,
+    pub network_manager_bus: channel::Sender<String>
 }
 
 impl ClientHandler {
