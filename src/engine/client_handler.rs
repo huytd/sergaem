@@ -2,13 +2,13 @@ use ws::{CloseCode, Sender, Handler, Handshake, Message, Result};
 use ws::util::Token;
 use std::sync::mpsc;
 
-pub struct ServerHandler {
+pub struct ClientHandler {
     pub socket: Sender,
     pub game_manager_bus: mpsc::Sender<String>,
     pub network_manager_bus: mpsc::Sender<String>
 }
 
-impl ServerHandler {
+impl ClientHandler {
     pub fn notify(&self, msg: &str) {
         self.game_manager_bus.send(msg.to_string());
         self.network_manager_bus.send(msg.to_string());
@@ -23,7 +23,7 @@ impl ServerHandler {
     }
 }
 
-impl Handler for ServerHandler {
+impl Handler for ClientHandler {
     fn on_open(&mut self, _: Handshake) -> Result<()> {
         println!("Client connected");
         // TODO: Network add player

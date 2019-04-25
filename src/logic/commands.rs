@@ -1,8 +1,8 @@
 use ws::Result;
 
-use engine::server_handler::ServerHandler;
+use engine::client_handler::ClientHandler;
 
-impl ServerHandler {
+impl ClientHandler {
     pub fn processing_commands(&mut self, msg: &str) -> Result<()> {
         match &msg[0..3] {
             "LST" => {

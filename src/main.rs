@@ -6,7 +6,7 @@ mod engine;
 
 use ws::listen;
 use engine::network::NetworkManager;
-use engine::server_handler::ServerHandler;
+use engine::client_handler::ClientHandler;
 use engine::game_manager::GameManager;
 use std::thread;
 use std::sync::mpsc;
@@ -31,12 +31,12 @@ fn main() {
         let ntx = ntx.clone();
         scope.spawn(move || {
             listen("127.0.0.1:3123", |client| {
-                let server = ServerHandler {
+                let handler = ClientHandler {
                     socket: client,
                     game_manager_bus: gtx.clone(),
                     network_manager_bus: ntx.clone()
                 };
-                server
+                handler
             }).unwrap();
         });
     });
